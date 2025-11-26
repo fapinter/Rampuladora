@@ -1,4 +1,0 @@
-function calculate_ramp(){
-    
-
-}

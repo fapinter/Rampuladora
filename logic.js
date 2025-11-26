@@ -1,0 +1,4 @@
+function calculate_ramp(){
+    
+
+}

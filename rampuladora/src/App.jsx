@@ -295,14 +295,12 @@ const App = () => {
                 <i className='pi pi-info-circle' title='As rampas são calculadas considerando uma rampa reta'></i>
               </div>
             </span>
-          </div>
-          
+          </div>         
           <div className="output-grid">
             <div className="output-card">
               <span className="output-label">Comp. Total
                 <span> </span>
                 <i className='pi pi-info-circle' title='Considera os Patamares' style={{fontWeight: 'inherit'}}></i>
-
               </span>
               <span className="output-value">{outputs.totalLength}m</span>
             </div>
@@ -312,15 +310,13 @@ const App = () => {
                 <i className='pi pi-info-circle' title='Considerando apenas os Segmentos' style={{fontWeight: 'inherit'}}></i>
               </span>
               <span className="output-value">{outputs.rampLength}m</span>
-            </div>
-            
+            </div>            
             <div className="output-card">
               <span className="output-label">Nº Patamares
                 <span> </span>
                 <i className='pi pi-info-circle' title='Patamares de 1.2m' style={{fontWeight: 'inherit'}}></i>
               </span>
-              <span className="output-value">{outputs.numLandings}</span>
-              
+              <span className="output-value">{outputs.numLandings}</span> 
             </div>  
             <div className="output-card">
               <span className="output-label">Nº Segmentos
@@ -353,7 +349,6 @@ const App = () => {
                 )}
               </span>
               <span className="output-value">{outputs.incPercentage}%</span>
-              
             </div>
             <div className="output-card">
               <span className="output-label">Inclinação Graus</span>

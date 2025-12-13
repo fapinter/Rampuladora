@@ -50,28 +50,7 @@ h1 {
   column-gap: 5%;
   
 }
-@media (max-width: 900px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-    row-gap: 5%;
-  }
-  
-}
-@media (max-width: 500px){
-  h1{
-    font-size: 50px;
-  }
-}
-@media (max-width: 420px){
-  h1{
-    font-size: 40px;
-  }
-}
-@media (max-width: 340px){
-  h1{
-    font-size: 30px;
-  }
-}
+
 
 /* Input Section */
 .input-section {
@@ -101,6 +80,10 @@ h1 {
   font-weight: bold;
   font-size: 1.5rem;
   border-bottom: 3px solid var(--primary);
+  margin-bottom: 5%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 
@@ -283,9 +266,12 @@ h1 {
   width: 95%;
   min-height: 700px;
   height: 90%;
+
+  display: flex;
+  flex-direction: column;
   background-color: var(--primary);
   margin: 5% 0%;
-  padding: 2.5% 1.25%;
+  padding: 5% 2.5%;
   border-radius: 20px;
   color: var(--background);
 }
@@ -295,15 +281,17 @@ h1 {
 }
 
 .output-grid {
+  height: 90%;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  column-gap: 5%;
+  row-gap: 2.5%;
 }
 
 .output-card {
   background-color: var(--secondary);
   border-radius: 15px;
-  padding: 15px;
+  padding: 5% 2.5%;
   text-align: center;
   color: var(--primary);
   border: 3px solid #a0480b;
@@ -325,3 +313,44 @@ h1 {
   font-weight: 900;
 }
 
+@media (max-width: 900px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+    row-gap: 5%;
+  }
+  .output-card{
+    .output-label{
+      font-size: 20px;
+    }
+    .output-value{
+      font-size: 18px;
+    }
+  }
+  
+}
+@media (max-width: 500px){
+  h1{
+    font-size: 50px;
+  }
+  .output-card{
+    .output-label{
+      font-size: 15px;
+    }
+    .output-value{
+      font-size: 14px;
+    }
+  }
+}
+@media (max-width: 420px){
+  h1{
+    font-size: 40px;
+  }
+}
+@media (max-width: 340px){
+  h1{
+    font-size: 30px;
+  }
+  .output-value{
+    font-size: 12px;
+  }
+}

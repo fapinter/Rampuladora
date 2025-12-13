@@ -1,175 +1,165 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './App.css';
+import 'primeicons/primeicons.css';
 
 const App = () => {
-  // State for inputs
-  const [inclination, setInclination] = useState('');
+  const [inclination, setInclination] = useState(undefined);
+  const [length, setLength] = useState(undefined);
+  const [height, setHeight] = useState(undefined);
+  const [max_inclination, setMaxInclination] = useState(8.33);
+  
   const [inclinationUnit, setInclinationUnit] = useState('percentage'); // 'percentage' or 'degrees'
-  const [length, setLength] = useState('');
-  const [height, setHeight] = useState('');
-  
-  const [checkEvery50m, setCheckEvery50m] = useState(false);
-  const [checkIntermediates, setCheckIntermediates] = useState(false);
-  const [checkEnds, setCheckEnds] = useState(false);
-  
   const [type_calculator, setTypeCalculator] = useState('comprimento');
   const [exception, setException] = useState('none');
 
-  // Outputs (Mock values since logic is not required)
+  const [checkEvery50m, setCheckEvery50m] = useState(false);
+  const [checkIntermediates, setCheckIntermediates] = useState(false);
+  const [limitate_segments, setLimitateSegments] = useState(false);
+  
   const [outputs, setOutputs] = useState({
     numLandings: 0,
     incDegrees: 0,
     incPercentage: 0,
     totalLength: 0,
     rampHeight: 0,
-    numSegments: 0
+    numSegments: 0,
+    rampLength : 0,
+    segmentHeight : 0
   });
+
   const LANDING_LENGTH = 1.2;
   const LIMIT_SEGMENTS = 15;
+  const DEFAULT_MAX_INCLINATION = 8.33;
+  const DEFAULT_LIMITATE_SEGMENTS = false;
 
   const handleBlur = (setter) => (e) => {
     let value = parseFloat(e.target.value);
-
     if(!isNaN(value)){
       const formattedValue = parseFloat(value.toFixed(2));
-      
       setter(formattedValue);
     }
   }
 
+  const confException = (value) => {
+    setException(value);
+    if (value !== 'none'){
+      setCheckEvery50m(false);
+      setCheckIntermediates(false);
+      
+    }
+  }
 
   function getLandings(inc, size){
-    const patamares = new Array();
-    let limitate_segments = false;
-    let num_segments = 0;
+    let patamares = new Array();
+    const alturas = new Array();
+    let num_segments = 1;
+
+    //Patamares intermediários por limite de altura 
     if(checkIntermediates){
       let step = NaN;
       
-      if(inc < 5){step = 1.5}
-      else if(inc <= 6.25){step = 1}
-      else if (inc > 6.25 && inc <= 8.33){step = 0.8; limitate_segments = true}
+      if(inc <= 5){step = 1.5}
+      else if(inc > 5 && inc <= 6.25){step = 1}
+      else if (inc > 6.25 && inc <= 8.33){step = 0.8; setLimitateSegments(true)}
 
-      //Patamares intermediários por limite de altura
-      for(let curr_height = step; curr_height <=height; curr_height += step){
-        num_segments += 1;
-        const ratio = height / curr_height;
-        const curr_length = size/ratio;
-        patamares.push(curr_length);
+      if(!isNaN(step)){
+        for(let curr_height = step; curr_height <=height; curr_height += step){
+          //Adiciona um segmento e um patamar
+          num_segments += 1;
+          alturas.push(curr_height);
+          const ratio = height / curr_height;
+          const curr_length = size/ratio;
+          patamares.push(curr_length);
+        }
       }
-      
+      else{
+        num_segments = 1;
+      }
     }
     const temp_size = size + LANDING_LENGTH * patamares.length;
-    console.log('temp_size', temp_size);
 
     //Patamares a cada 50 metros caso não exista um dentro deste intervalo
     if(checkEvery50m){
+      let final_patamares = patamares;
       let last_step = 0;
-      for(let i = 50; i <= temp_size; i+= 50){
+      for(let curr_step = 50; curr_step <= temp_size; curr_step+= 50){
         const landings_in_between = patamares.filter(item => {
-          if(item > last_step && item <= last_step){ return item; }
+          if(item > last_step && item <= curr_step){ return item; }
         });
 
-        if (landings_in_between.length > 0){
-          patamares.push(i);
+        if (landings_in_between.length === 0){
+          final_patamares.push(curr_step);
+          num_segments += 1;
         }
-        
-        last_step = i;
+        last_step = curr_step;
       }
+      patamares = final_patamares;
     }
-    
-    if(checkEnds){
-      patamares.push(0);
-      patamares.push(size);
-    }
-    const return_size = size + LANDING_LENGTH * patamares.length;
-    console.log('patamares', patamares);
 
-    return [return_size, limitate_segments, num_segments, patamares.length]
+    const return_size = size + LANDING_LENGTH * patamares.length;
+    patamares.sort((a, b) => a - b);
+
+    return [return_size, num_segments, patamares.length];
   }
 
   function calculate(){
-    console.log('height', height);
-    console.log('length', length);
-    console.log('inclination', inclination);
+    setOutputs({
+      numLandings: 0,
+      incDegrees: 0,
+      incPercentage: 0,
+      totalLength: 0,
+      rampHeight: 0,
+      numSegments: 0,
+      rampLength : 0,
+      segmentHeight : 0
+    });
+    //Variable used for calculation inside the function
+    let max_inclination_local = DEFAULT_MAX_INCLINATION;
+
+    //Constants used for Display on the page
+    setLimitateSegments(DEFAULT_LIMITATE_SEGMENTS);
+    setMaxInclination(DEFAULT_MAX_INCLINATION);
+
+    let inclination_percentage = 0;
+    let inclination_degrees = 0;
+    let size = 0;
     if(type_calculator === 'comprimento'){
-      let inc = inclinationUnit === 'degrees'? Math.tan(inclination) * 100 : inclination;
-      const inc_degrees = parseFloat((Math.atan(inc/100) * (180 / Math.PI)).toFixed(2));
-      let max_inclination = 8.33;
-
-      switch(exception){
-        case 'theater_corridor':
-          max_inclination = 12;
-          break;
-        case 'stage_access':
-          max_inclination = height > 0.6 ? 10 : 16.66;
-          break;
-        case 'vehicle_ramp':
-          max_inclination = 20;
-      }
-
-      if(inc > max_inclination){
-        inc = max_inclination;
-        console.log('Inclinação acima da Norma, a Inclinação foi alterada para o máximo permitido no cenário');
-      }
-
-      let size = ( height * 100 ) / inc;
-      let limitate_segments = false;
-      let num_segments = 0;
-      let num_landings = 0;
-      let final_size = 0;
-      console.log('initial-size: ', size);
-      [size, limitate_segments, num_segments, num_landings] = getLandings(inc, size);
-      console.log('limit segments', limitate_segments);
-      console.log('num_segments',num_segments);
-      console.log('num_landings',num_landings);
-      console.log('final-size', size);
-
-      
-      setOutputs({
-        totalLength : size,
-        incPercentage : inc,
-        incDegrees : inc_degrees,
-        height : height,
-        numSegments : num_segments,
-        numLandings : num_landings,
-      });
-
-      
+      inclination_percentage = inclinationUnit === 'degrees'? Math.tan(inclination) * 100 : inclination;
+      inclination_degrees = inclinationUnit === 'degrees'? inclination : parseFloat((Math.atan(inclination_percentage/100) * (180 / Math.PI)).toFixed(2));
+      size = ( height * 100 ) / inclination_percentage;
     }
     else{
+      inclination_percentage = (height * 100) / length;
+      inclination_degrees = parseFloat((Math.atan(inclination_percentage/100) * (180 / Math.PI)).toFixed(2));
+      size = length;
+    }
+    switch(exception){
+      case 'theater_corridor':
+        max_inclination_local = 12;
+        setMaxInclination(12);
+        break;
+      case 'stage_access':
+        max_inclination_local = height > 0.6 ? 10 : 16.66;
+        setMaxInclination(height > 0.6 ? 10 : 16.66);
+        break;
+      case 'vehicle_ramp':
+        max_inclination_local = 20;
+        setMaxInclination(20);
+        break;
+    }
+    
+    const [final_size, num_segments, num_landings] = getLandings(inclination_percentage, size);
 
-      const inc_percentage = (height * 100) / length;
-      const inc_degrees = parseFloat((Math.atan(inc/100) * (180 / Math.PI)).toFixed(2));
-      let max_inclination = 8.33;
-      switch(exception){
-        case 'theater_corridor':
-          max_inclination = 12;
-          break;
-        case 'stage_access':
-          max_inclination = height > 0.6 ? 10 : 16.66;
-          break;
-        case 'vehicle_ramp':
-          max_inclination = 20;
-      }
-      console.log(inc);
-
-      let size = ( height * 100 ) / inc_percentage;
-      let limitate_segments = false;
-      let num_segments = 0;
-      let num_landings = 0;
-      console.log('initial-size: ', size);
-      size, limitate_segments, num_segments, num_landings = getLandings(inc_percentage, size);
-      console.log('final-size', size);
-      
-      setOutputs({
-        totalLength : size,
-        incPercentage : inc_percentage,
-        incDegrees : inc_degrees,
-        height : height,
+    setOutputs({
+        totalLength : final_size.toFixed(2),
+        incPercentage : inclination_percentage.toFixed(2),
+        incDegrees : inclination_degrees.toFixed(2),
+        rampHeight : height.toFixed(2),
         numSegments : num_segments,
         numLandings : num_landings,
-      });
-    }
+        rampLength : size.toFixed(2),
+        segmentHeight : (height.toFixed(2) / num_segments).toFixed(4)
+    });
   }
 
   return (
@@ -258,12 +248,12 @@ const App = () => {
             <select
               className="input-field"
               value={exception}
-              onChange={(ev) => setException(ev.target.value)}
+              onChange={(ev) => confException(ev.target.value)}
             >
               <option value="none">Nenhum</option>
               <option value="theater_corridor">Corredores de Teatro</option>
               <option value="stage_access">Acesso ao Palco</option>
-              <option value="vehicle-ramp">Rampa para Veículos</option>
+              <option value="vehicle_ramp">Rampa para Veículos</option>
             </select>
           </div>
           {/* Checkboxes */}
@@ -287,15 +277,6 @@ const App = () => {
                 />
                 Patamares intermediários
               </label>
-              <label className="checkbox-label">
-                <input
-                  className="checkbox-input"
-                  type="checkbox"
-                  checked={checkEnds}
-                  onChange={(ev) => setCheckEnds(ev.target.checked)}
-                />
-                Patamares inicial e final
-              </label>
             </div>
             ): (
               <div className='checkbox-wrapper'>
@@ -307,36 +288,77 @@ const App = () => {
 
         {/* Output Column */}
         <section className="output-section">
-          <h2 className="section-title" style={{ color: '#eadeda', borderColor: '#eadeda' }}>
-            Resultados
-          </h2>
+          <div className="title-wrapper">
+            <span className='section-title'>
+              <div>
+                <span>Resultados </span>
+                <i className='pi pi-info-circle' title='As rampas são calculadas considerando uma rampa reta'></i>
+              </div>
+            </span>
+          </div>
           
           <div className="output-grid">
             <div className="output-card">
-              <span className="output-label">Comp. Total</span>
+              <span className="output-label">Comp. Total
+                <span> </span>
+                <i className='pi pi-info-circle' title='Considera os Patamares' style={{fontWeight: 'inherit'}}></i>
+
+              </span>
               <span className="output-value">{outputs.totalLength}m</span>
             </div>
             <div className="output-card">
-              <span className="output-label">Altura Rampa</span>
-              <span className="output-value">{outputs.height}m</span>
+              <span className="output-label">Comp. da Rampa
+                <span> </span>
+                <i className='pi pi-info-circle' title='Considerando apenas os Segmentos' style={{fontWeight: 'inherit'}}></i>
+              </span>
+              <span className="output-value">{outputs.rampLength}m</span>
             </div>
+            
             <div className="output-card">
-              <span className="output-label">Nº Patamares</span>
+              <span className="output-label">Nº Patamares
+                <span> </span>
+                <i className='pi pi-info-circle' title='Patamares de 1.2m' style={{fontWeight: 'inherit'}}></i>
+              </span>
               <span className="output-value">{outputs.numLandings}</span>
+              
             </div>  
             <div className="output-card">
-              <span className="output-label">Nº Segmentos</span>
+              <span className="output-label">Nº Segmentos
+                <span> </span>
+                {(limitate_segments && outputs.numSegments > LIMIT_SEGMENTS) &&(
+                  <i className='pi pi-exclamation-triangle' title='Limite de segmentos excedido (máximo de 15)' style={{fontWeight: 'inherit'}}></i>
+                )}
+                {(outputs.incPercentage > max_inclination && exception === 'none') && (
+                  <i className='pi pi-exclamation-triangle' title='Separação de segmentos indisponível devido à Inclinação' style={{fontWeight: 'inherit'}}></i>
+                )}
+              </span>
               <span className="output-value">{outputs.numSegments}</span>
-            </div>     
+            </div> 
             <div className="output-card">
-              <span className="output-label">Inclinação %</span>
+              <span className="output-label">Altura Rampa</span>
+              <span className="output-value">{outputs.rampHeight}m</span>
+            </div>
+            <div className="output-card">
+              <span className="output-label">Altura dos Segmentos
+                <span> </span>
+                <i className='pi pi-info-circle' title='Valor arredondado, favor verificar o cálculo' style={{fontWeight: 'inherit'}}></i>
+              </span>
+              <span className="output-value">{outputs.segmentHeight}m</span>
+            </div>
+            <div className="output-card">
+              <span className="output-label">Inclinação %
+                <span> </span>
+                {(outputs.incPercentage > max_inclination) && (
+                  <i className='pi pi-exclamation-triangle' title={`Inclinação não acessível (máximo de ${max_inclination})`} style={{fontWeight: 'inherit'}}></i>
+                )}
+              </span>
               <span className="output-value">{outputs.incPercentage}%</span>
+              
             </div>
             <div className="output-card">
               <span className="output-label">Inclinação Graus</span>
               <span className="output-value" >{outputs.incDegrees}°</span>
             </div>
-
           </div>
         </section>
       </div>

@@ -11,7 +11,7 @@ const App = () => {
 
   const [inclinationUnit, setInclinationUnit] = useState("percentage"); // 'percentage' or 'degrees'
   const [type_calculator, setTypeCalculator] = useState("comprimento");
-  const [exception, setException] = useState("none");
+  const [exception, setException] = useState("default");
 
   const [checkEvery50m, setCheckEvery50m] = useState(false);
   const [checkIntermediates, setCheckIntermediates] = useState(false);
@@ -43,7 +43,7 @@ const App = () => {
 
   const confException = (value) => {
     setException(value);
-    if (value !== "none") {
+    if (value !== "default") {
       setCheckEvery50m(false);
       setCheckIntermediates(false);
     }
@@ -123,8 +123,6 @@ const App = () => {
       rampLength: 0,
       segmentHeight: 0,
     });
-    //Variable used for calculation inside the function
-    let max_inclination_local = DEFAULT_MAX_INCLINATION;
 
     //Constants used for Display on the page
     setLimitateSegments(DEFAULT_LIMITATE_SEGMENTS);
@@ -157,15 +155,12 @@ const App = () => {
     }
     switch (exception) {
       case "theater_corridor":
-        max_inclination_local = 12;
         setMaxInclination(12);
         break;
       case "stage_access":
-        max_inclination_local = height > 0.6 ? 10 : 16.66;
         setMaxInclination(height > 0.6 ? 10 : 16.66);
         break;
       case "vehicle_ramp":
-        max_inclination_local = 20;
         setMaxInclination(20);
         break;
     }
@@ -288,14 +283,14 @@ const App = () => {
               value={exception}
               onChange={(ev) => confException(ev.target.value)}
             >
-              <option value="none">Nenhum</option>
+              <option value="default">Rampa Padrão</option>
               <option value="theater_corridor">Corredores de Teatro</option>
               <option value="stage_access">Acesso ao Palco</option>
               <option value="vehicle_ramp">Rampa para Veículos</option>
             </select>
           </div>
           {/* Checkboxes */}
-          {exception === "none" ? (
+          {exception === "default" ? (
             <div className="checkbox-wrapper">
               <label className="checkbox-label">
                 <input
@@ -336,7 +331,6 @@ const App = () => {
                 <span>Resultados </span>
                 <i
                   className="pi pi-info-circle"
-                  title="As rampas são calculadas considerando uma rampa reta"
                   data-tooltip-id="tooltip-info"
                   data-tooltip-content="As rampas são calculadas considerando uma rampa reta"
                 ></i>
@@ -350,10 +344,9 @@ const App = () => {
                 <span> </span>
                 <i
                   className="pi pi-info-circle"
-                  title="Considera os Patamares"
                   style={{ fontWeight: "inherit" }}
                   data-tooltip-id="tooltip-info"
-                  data-tooltip-content="Considera os Patamares"
+                  data-tooltip-content="Considerando o comprimento dos patamares"
                 ></i>
               </span>
               <span className="output-value">{outputs.totalLength}m</span>
@@ -364,9 +357,8 @@ const App = () => {
                 <span> </span>
                 <i
                   className="pi pi-info-circle"
-                  title="Considerando apenas os Segmentos"
                   style={{ fontWeight: "inherit" }}
-                  data-tooltip-content="Considerando apenas os Segmentos"
+                  data-tooltip-content="Considerando apenas o comprimento dos segmentos de rampa"
                   data-tooltip-id="tooltip-info"
                 ></i>
               </span>
@@ -378,9 +370,8 @@ const App = () => {
                 <span> </span>
                 <i
                   className="pi pi-info-circle"
-                  title="Patamares de 1.2m"
-                  style={{ ftitleontWeight: "inherit" }}
-                  data-tooltip-content="Patamares de 1.2m"
+                  style={{ fontWeight: "inherit" }}
+                  data-tooltip-content="Patamares com 1.2m de comprimento"
                   data-tooltip-id="tooltip-info"
                 ></i>
               </span>
@@ -393,19 +384,17 @@ const App = () => {
                 {limitate_segments && outputs.numSegments > LIMIT_SEGMENTS && (
                   <i
                     className="pi pi-exclamation-triangle"
-                    title="Limite de segmentos excedido (máximo de 15)"
                     style={{ fontWeight: "inherit" }}
-                    data-tooltip-content="Limite de segmentos excedido (máximo de 15)"
+                    data-tooltip-content="Limite de segmentos excedido (máximo de 15 na inclinação atual)"
                     data-tooltip-id="tooltip-info"
                   ></i>
                 )}
                 {outputs.incPercentage > max_inclination &&
-                  exception === "none" && (
+                  exception === "default" && (
                     <i
                       className="pi pi-exclamation-triangle"
-                      title="Separação de segmentos indisponível devido à Inclinação"
                       style={{ fontWeight: "inherit" }}
-                      data-tooltip-content="Separação de segmentos indisponível devido à Inclinação"
+                      data-tooltip-content="Separação de segmentos indisponível devido à Inclinação atual"
                       data-tooltip-id="tooltip-info"
                     ></i>
                   )}
@@ -422,10 +411,9 @@ const App = () => {
                 <span> </span>
                 <i
                   className="pi pi-info-circle"
-                  title="Valor arredondado, favor verificar o cálculo"
                   style={{ fontWeight: "inherit" }}
                   data-tooltip-id="tooltip-info"
-                  data-tooltip-content="Valor arredondado, favor verificar o cálculo"
+                  data-tooltip-content="Valores arredondados, favor verificar o cálculo"
                 ></i>
               </span>
               <span className="output-value">{outputs.segmentHeight}m</span>
@@ -436,7 +424,8 @@ const App = () => {
                 {outputs.incPercentage > max_inclination && (
                   <i
                     className="pi pi-exclamation-triangle"
-                    title={`Inclinação não acessível (máximo de ${max_inclination})`}
+                    data-tooltip-content={`Inclinação não acessível (máximo de ${max_inclination} no cenário atual)`}
+                    data-tooltip-id="tooltip-info"
                     style={{ fontWeight: "inherit" }}
                   ></i>
                 )}
